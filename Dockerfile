@@ -46,7 +46,7 @@ RUN apt-get -qy update \
     inetutils-telnet \
     # Use ubuntu gems where possible
     # Gems needed by oxidized
-    ruby-rugged ruby-slop ruby-psych \
+    ruby-slop ruby-psych \
     ruby-net-telnet ruby-net-ssh ruby-net-ftp ruby-ed25519 \
     # Gem dependencies for inputs
     ruby-net-http-persistent ruby-mechanize \
@@ -57,8 +57,7 @@ RUN apt-get -qy update \
     # Gems needed by oxidized-web
     ruby-charlock-holmes ruby-haml ruby-htmlentities ruby-json \
     puma ruby-sinatra ruby-sinatra-contrib \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
 
 # gems not available in ubuntu noble
 RUN gem install --no-document \
@@ -76,7 +75,8 @@ WORKDIR /tmp/oxidized
 # Install gems which needs a build environment
 RUN apt-get -qy update && \
     apt-get -qy install --no-install-recommends \
-                        build-essential ruby-dev && \
+                        build-essential ruby-dev \
+                        cmake pkg-config libssl-dev libssh2-1-dev && \
     ##### X25519 (a.k.a. Curve25519) Elliptic Curve Diffie-Hellman
     gem install x25519 && \
     ##### build & install oxidized from the working repository
@@ -85,8 +85,11 @@ RUN apt-get -qy update && \
     rake install && \
     # install oxidized-web
     gem install oxidized-web --no-document && \
+    # install rugged with ssh
+    gem install rugged -- --with-ssh && \
     # remove the packages we do not need.
-    apt-get -qy remove build-essential ruby-dev && \
+    apt-get -qy remove build-essential ruby-dev \
+    cmake pkg-config && \
     apt-get -qy autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
